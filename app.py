@@ -1,8 +1,10 @@
 import uuid
+import os
 
 import streamlit as st
 from dotenv import load_dotenv
 from utils import *
+import constants
 
 if 'unique_id' not in st.session_state:
     st.session_state['unique_id'] =''
@@ -37,10 +39,10 @@ def main():
             embeddings=create_embeddings_load_data()
 
             #Push data to PINECONE
-            push_to_pinecone("23580e96-142c-4a87-87fa-dcb896bddea2","gcp-starter","test",embeddings,final_docs_list)
+            index = push_to_pinecone(os.getenv('PINECONE_API_KEY'),constants.PINECONE_ENVIRONMENT,constants.PINECONE_INDEX,embeddings,final_docs_list)
 
             #Fetch relavant documents from PINECONE
-            relavant_docs=similar_docs(job_description,document_count,"23580e96-142c-4a87-87fa-dcb896bddea2","gcp-starter","test",embeddings,st.session_state['unique_id'])
+            relavant_docs = get_similar_docs(index, job_description, document_count, st.session_state['unique_id'])
 
             #st.write(relavant_docs)
 

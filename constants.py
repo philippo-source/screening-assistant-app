@@ -1,0 +1,2 @@
+PINECONE_ENVIRONMENT="gcp-starter"
+PINECONE_INDEX="screen"
