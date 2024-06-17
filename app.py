@@ -6,8 +6,9 @@ from dotenv import load_dotenv
 from utils import *
 import constants
 
-if 'unique_id' not in st.session_state:
-    st.session_state['unique_id'] =''
+if "unique_id" not in st.session_state:
+    st.session_state["unique_id"] = ""
+
 
 def main():
     load_dotenv()
@@ -16,57 +17,71 @@ def main():
     st.title("HR - Resume Screening Assistance")
     st.subheader("I can help you in the resume screening process")
 
-    job_description = st.text_area("Please paste the 'JOB DESCRIPTION' here...",key="1")
-    document_count = st.text_input("No.of 'RESUMES' to return",key="2")
+    job_description = st.text_area(
+        "Please paste the 'JOB DESCRIPTION' here...", key="1"
+    )
+    document_count = st.text_input("No.of 'RESUMES' to return", key="2")
     # Upload the Resumes (pdf files)
-    pdf = st.file_uploader("Upload resumes here, only PDF files allowed", type=["pdf"],accept_multiple_files=True)
+    pdf = st.file_uploader(
+        "Upload resumes here, only PDF files allowed",
+        type=["pdf"],
+        accept_multiple_files=True,
+    )
 
-    submit=st.button("Analyse")
+    submit = st.button("Analyse")
 
     if submit:
-        with st.spinner('Please wait...'):
+        with st.spinner("Please wait..."):
 
-            #Creating a unique ID to query only the user uploaded documents from PINECONE vector store
-            st.session_state['unique_id']=uuid.uuid4().hex
+            # Creating a unique ID to query only the user uploaded documents from PINECONE vector store
+            st.session_state["unique_id"] = uuid.uuid4().hex
 
-            #Create a documents list out of all the user uploaded pdf files
-            final_docs_list=create_docs(pdf,st.session_state['unique_id'])
+            # Create a documents list out of all the user uploaded pdf files
+            final_docs_list = create_docs(pdf, st.session_state["unique_id"])
 
-            #Displaying the count of resumes that have been uploaded
-            st.write("*Resumes uploaded* :"+str(len(final_docs_list)))
+            # Displaying the count of resumes that have been uploaded
+            st.write("*Resumes uploaded* :" + str(len(final_docs_list)))
 
-            #Create embeddings instance
-            embeddings=create_embeddings_load_data()
+            # Create embeddings instance
+            embeddings = create_embeddings_load_data()
 
-            #Push data to PINECONE
-            index = push_to_pinecone(os.getenv('PINECONE_API_KEY'),constants.PINECONE_ENVIRONMENT,constants.PINECONE_INDEX,embeddings,final_docs_list)
+            # Push data to PINECONE
+            index = push_to_pinecone(
+                os.getenv("PINECONE_API_KEY"),
+                constants.PINECONE_ENVIRONMENT,
+                constants.PINECONE_INDEX,
+                embeddings,
+                final_docs_list,
+            )
 
-            #Fetch relavant documents from PINECONE
-            relavant_docs = get_similar_docs(index, job_description, document_count, st.session_state['unique_id'])
+            # Fetch relavant documents from PINECONE
+            relavant_docs = get_similar_docs(
+                index, job_description, document_count, st.session_state["unique_id"]
+            )
 
-            #st.write(relavant_docs)
+            # st.write(relavant_docs)
 
-            #Introducing a line separator
+            # Introducing a line separator
             st.write(":heavy_minus_sign:" * 30)
 
-            #For each item in relavant docs - we are displaying some info of it on the UI
+            # For each item in relavant docs - we are displaying some info of it on the UI
             for item in range(len(relavant_docs)):
-                
-                st.subheader("👉 "+str(item+1))
 
-                #Displaying Filepath
-                st.write("**File** : "+relavant_docs[item][0].metadata['name'])
+                st.subheader("👉 " + str(item + 1))
 
-                #Introducing Expander feature
-                with st.expander('Show me 👀'): 
-                    st.info("**Match Score** : "+str(relavant_docs[item][1]))
-                    #st.write("***"+relavant_docs[item][0].page_content)
+                # Displaying Filepath
+                st.write("**File** : " + relavant_docs[item][0].metadata["name"])
+
+                # Introducing Expander feature
+                with st.expander("Show me 👀"):
+                    st.info("**Match Score** : " + str(relavant_docs[item][1]))
+                    # st.write("***"+relavant_docs[item][0].page_content)
 
                     summary = get_summary(relavant_docs[item][0])
-                    st.write("**Summary** : "+summary)
+                    st.write("**Summary** : " + summary)
 
         st.success("Successfully executed")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()
